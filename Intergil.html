@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Camisas Intergil</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+  </head>
+
+  <body>
+    <nav>
+      <b id="logo"></b>
+      <span>
+        <button id="bVoltar" class="hidden" hidden>VOLTAR</button>
+        <button id="bSair" hidden>SAIR</button>
+      </span>
+    </nav>
+
+    <main id="app"></main>
+
+    <div class="hud">
+      <div class="box say">
+        <button
+          class="mascot"
+          id="mascot"
+          type="button"
+          aria-label="Clique no mascote para ele falar"
+        >
+          <img
+            alt="Mascote do site: uma televisão sorridente com um lápis"
+            src="mascote.png"
+          >
+        </button>
+
+        <div id="fala" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <footer>Camisas do Intergil · trabalho escolar</footer>
+  </body>
+</html>

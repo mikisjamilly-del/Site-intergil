@@ -1,0 +1,381 @@
+:root {
+  --red: #e11d1d;
+  --blue: #3b6cf5;
+  --yellow: #ffd400;
+  --dim: #b8b8c8;
+
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font: 22px/1.25 VT323, "Courier New", monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.px,
+h1,
+h2,
+nav,
+.go,
+.picks button,
+.sb {
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-weight: 400;
+}
+
+svg {
+  shape-rendering: crispEdges;
+  display: block;
+}
+
+/* Navegação */
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px;
+  font-size: 11px;
+}
+
+nav b {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 400;
+}
+
+nav span {
+  display: flex;
+  gap: 14px;
+}
+
+nav button {
+  font: inherit;
+  background: none;
+  border: 0;
+  color: var(--yellow);
+  cursor: pointer;
+  padding: 6px;
+}
+
+/* Área principal */
+
+#app {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px 24px 24px;
+}
+
+.tag {
+  color: var(--yellow);
+  font-size: 11px;
+  margin: 0 0 16px;
+}
+
+h1 {
+  font-size: clamp(22px, 4vw, 42px);
+  line-height: 1.4;
+  margin: 0 0 16px;
+  text-transform: uppercase;
+}
+
+h1 em {
+  font-style: normal;
+  color: var(--yellow);
+}
+
+h2 {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.lead {
+  color: var(--dim);
+  margin: 0 0 22px;
+}
+
+/* Caixas e opções */
+
+.box {
+  border: 4px solid #fff;
+  background: #000;
+  padding: 20px;
+}
+
+.picks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.picks button,
+.sb {
+  font-size: 12px;
+  padding: 22px 8px;
+  background: #000;
+  border: 4px solid var(--c);
+  color: var(--c);
+  cursor: pointer;
+}
+
+.picks button:hover,
+.sb:hover {
+  background: var(--c);
+  color: #000;
+}
+
+.mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mini svg {
+  width: 30px;
+}
+
+/* Formulários */
+
+form {
+  display: grid;
+  gap: 14px;
+  max-width: 460px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+}
+
+input,
+select {
+  font: 22px VT323, monospace;
+  padding: 8px 10px;
+  background: #000;
+  color: #fff;
+  border: 3px solid #fff;
+  border-radius: 0;
+  width: 100%;
+}
+
+select option {
+  background: #000;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+/* Botão principal */
+
+.go {
+  font-size: 13px;
+  background: var(--yellow);
+  color: #000;
+  border: 0;
+  padding: 16px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--red);
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+
+.go:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--red);
+}
+
+/* Links e mensagens */
+
+.link {
+  background: none;
+  border: 0;
+  color: var(--yellow);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.err {
+  color: #ff6b6b;
+  min-height: 22px;
+  margin: 0;
+}
+
+.dim {
+  color: var(--dim);
+}
+
+/* Salas */
+
+.salas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.salas .sb {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 14px 8px;
+  font-size: 9px;
+  line-height: 1.6;
+  color: #fff;
+  border-color: #fff;
+}
+
+.salas .sb:hover {
+  color: #000;
+}
+
+.salas img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.q {
+  width: 56px;
+  height: 56px;
+  border: 3px dashed var(--dim);
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+}
+
+/* Detalhes da camisa */
+
+.det {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.det .big {
+  max-width: 280px;
+}
+
+.price {
+  font: 400 20px "Press Start 2P", monospace;
+  color: var(--yellow);
+  margin: 12px 0;
+}
+
+/* Pagamento PIX */
+
+.pixk {
+  border: 3px dashed var(--yellow);
+  padding: 12px;
+  word-break: break-all;
+  margin: 12px 0;
+}
+
+.ped {
+  border-top: 2px solid #333;
+  padding: 8px 0;
+}
+
+/* Mascote e balão de fala */
+
+.hud {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.say {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.mascot {
+  flex: none;
+  width: 100px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mascot img {
+  width: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.mascot.fala img {
+  animation: pula 0.36s steps(2) infinite;
+}
+
+@keyframes pula {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot.fala img {
+    animation: none;
+  }
+}
+
+#fala {
+  min-height: 3.8em;
+  flex: 1;
+}
+
+.cur::after {
+  content: "_";
+  color: var(--yellow);
+}
+
+/* Rodapé */
+
+footer {
+  padding: 18px 24px;
+  color: var(--dim);
+  text-align: center;
+  font-size: 18px;
+}
+
+/* Adaptação para celulares */
+
+@media (max-width: 700px) {
+  .picks,
+  .det {
+    grid-template-columns: 1fr;
+  }
+}
