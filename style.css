@@ -379,3 +379,109 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* Mascote de televisão retrô */
+
+.mascote {
+  position: relative;
+  width: 120px;
+  height: 135px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto;
+}
+
+.tv {
+  position: relative;
+  width: 100px;
+  height: 82px;
+  background: #e11d1d;
+  border: 5px solid #fff;
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 #7f1010;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 2;
+}
+
+.antena {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 45px;
+  height: 22px;
+  border-top: 4px solid #fff;
+  transform: translateX(-50%) rotate(-10deg);
+}
+
+.antena::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: -5px;
+  width: 9px;
+  height: 9px;
+  background: #ffd400;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.olhos {
+  display: flex;
+  gap: 22px;
+}
+
+.olho {
+  width: 12px;
+  height: 15px;
+  background: #fff;
+  border-radius: 50%;
+  position: relative;
+}
+
+.olho::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 7px;
+  background: #000;
+  border-radius: 50%;
+  left: 4px;
+  top: 4px;
+}
+
+.sorriso {
+  width: 34px;
+  height: 15px;
+  border-bottom: 4px solid #fff;
+  border-radius: 50%;
+}
+
+.pes {
+  position: absolute;
+  bottom: 6px;
+  display: flex;
+  gap: 30px;
+}
+
+.pes span {
+  width: 9px;
+  height: 15px;
+  background: #ffd400;
+  border: 2px solid #fff;
+}
+
+.mascote:hover .tv {
+  transform: translateY(-5px);
+}
+
+.mascote:active .tv {
+  transform: scale(0.95);
+}
