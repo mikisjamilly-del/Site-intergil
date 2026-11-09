@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Camisas do Intergil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <b id="logo"></b>
+    <span>
+      <button id="bVoltar" hidden>VOLTAR</button>
+      <button id="bSair" hidden>SAIR</button>
+    </span>
+  </nav>
+
+  <main id="app"></main>
+
+  <div class="hud">
+    <div class="box say">
+      <button class="mascot" id="mascot" type="button" aria-label="Clique no mascote para ele falar">
+        <img alt="Mascote do site: uma televisão sorridente com um lápis" src="assets/mascote.png">
+      </button>
+      <div id="fala" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <footer>Camisas do Intergil · trabalho escolar</footer>
+
+  <!-- A ordem importa: cada arquivo usa o que vem antes -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/mascote.js"></script>
+  <script src="js/telas.js"></script>
+  <script src="js/eventos.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
