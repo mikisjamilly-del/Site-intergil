@@ -10,5 +10,5 @@ const TURMAS = [
 const SENHAS = { rep: "intergiljdgr", adm: "valhallajdjr" };
 
 const ROT = { aluno: "aluno", rep: "representante", adm: "administração" };
-const COR = { aluno: "var(--yellow)", rep: "var(--blue)", adm: "var(--red)" };
+const COR = { aluno: "#a86a00", rep: "#2a4fc7", adm: "#c0182b" };
 const TAM = ["P", "M", "G", "GG", "XG"];

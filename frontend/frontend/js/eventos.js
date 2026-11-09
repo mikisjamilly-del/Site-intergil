@@ -1,7 +1,13 @@
 // Eventos de cada tela (cliques e envio de formulários).
 function bindEntrada() {
   document.querySelectorAll(".picks button").forEach(b => b.onclick = () => {
-    S.papel = b.dataset.papel; S.criar = false; go("acesso");
+    S.papel = b.dataset.papel; S.criar = false; go("cadastro");
+  });
+}
+
+function bindCadastro() {
+  document.querySelectorAll("[data-criar]").forEach(b => b.onclick = () => {
+    S.criar = b.dataset.criar === "1"; go("acesso");
   });
 }
 
@@ -17,16 +23,14 @@ function bindAcesso() {
     if (nome.split(/\s+/).length < 2 || !num || t === "") return er("Preencha nome completo, número da chamada e turma.");
     if (S.papel !== "aluno" && $("senha").value !== SENHAS[S.papel]) return er("Senha incorreta. Tente de novo.");
 
-    const u = { nome, num, turma: +t };
-    const k = c => [c.nome.toLowerCase(), c.num, c.turma].join("|");
+    const u = { nome, num, turma: +t, papel: S.papel };
+    const k = c => [c.nome.toLowerCase(), c.num, c.turma, c.papel || "aluno"].join("|");
     const ex = DB.contas.some(c => k(c) === k(u));
 
-    if (S.papel === "aluno") {
-      if (S.criar) {
-        if (ex) return er("Essa conta já existe. Acesse a conta.");
-        DB.contas.push(u); save();
-      } else if (!ex) return er("Conta não encontrada. Use Criar conta.");
-    }
+    if (S.criar) {
+      if (ex) return er("Essa conta já existe. Acesse a conta.");
+      DB.contas.push(u); save();
+    } else if (!ex) return er("Conta não encontrada. Use Criar conta.");
     S.user = u; S.edit = u.turma;
     go(S.papel === "aluno" ? "salas" : "painel");
   };
@@ -74,6 +78,7 @@ function bindPainel() {
       c.width = im.width * r; c.height = im.height * r;
       c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
       S.masc = c.toDataURL("image/webp", .85);
+      $("prev").innerHTML = `<img alt="Prévia da camisa" src="${S.masc}">`;
       dizer("Design da camisa carregado! Aperte salvar.");
     };
     im.src = URL.createObjectURL(f);
@@ -93,7 +98,7 @@ function bindPainel() {
 }
 
 const BINDS = {
-  entrada: bindEntrada, acesso: bindAcesso, salas: bindSalas,
+  entrada: bindEntrada, cadastro: bindCadastro, acesso: bindAcesso, salas: bindSalas,
   sala: bindSala, pedido: bindPedido, pix: bindPix, painel: bindPainel,
 };
 const bind = v => BINDS[v]();

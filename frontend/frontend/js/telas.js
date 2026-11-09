@@ -3,15 +3,28 @@ const opts = sel => TURMAS.map((t, i) => `<option value="${i}"${i === sel ? " se
 
 const V = {
   entrada: () => `
-    <p class="tag px">* CAMISAS DAS TURMAS</p>
-    <h1>Tenha acesso a todas <em>camisas</em> do Intergil!</h1>
-    <p class="lead">Compre e tenha informações do Intergil aqui!</p>
-    <div class="picks">
-      <button data-papel="aluno" style="--c:var(--yellow)">ALUNO</button>
-      <button data-papel="rep" style="--c:var(--blue)">REPRESENTANTE</button>
-      <button data-papel="adm" style="--c:var(--red)">ADM</button>
-    </div>
-    <div class="mini" aria-hidden="true">${TURMAS.map(t => shirt(t.hex)).join("")}</div>`,
+    <section class="hero">
+      <div class="arvore">${arvore()}</div>
+      <p class="tag px">CAMISAS DAS TURMAS</p>
+      <h1>Tenha acesso a todas as camisas do Intergil!</h1>
+      <p class="lead">Compre e tenha informações do Intergil aqui!</p>
+      <div class="picks">
+        <button data-papel="aluno" style="--c:#ffd400;--t:#2a1b5e">ALUNO</button>
+        <button data-papel="rep" style="--c:#3b6cf5;--t:#fff">REPRESENTANTE</button>
+        <button data-papel="adm" style="--c:#e11d1d;--t:#fff">ADM</button>
+      </div>
+      <div class="mini" aria-hidden="true">${TURMAS.map(t => shirt(t.hex)).join("")}</div>
+    </section>`,
+
+  cadastro: () => `
+    <section class="box">
+      <h2 style="color:${COR[S.papel]}">${ROT[S.papel].toUpperCase()}</h2>
+      <h1>Você já tem cadastro?</h1>
+      <div class="picks duas">
+        <button data-criar="0" style="--c:#ffd400;--t:#2a1b5e">JÁ TENHO CADASTRO</button>
+        <button data-criar="1" style="--c:#5cb34a;--t:#fff">AINDA NÃO TENHO</button>
+      </div>
+    </section>`,
 
   acesso: () => `
     <section class="box">
@@ -24,30 +37,26 @@ const V = {
         <p class="err" id="err" role="alert"></p>
         <button class="go" type="submit">${S.criar ? "CRIAR CONTA" : "ENTRAR"}</button>
       </form>
-      ${S.papel === "aluno" ? `<p class="dim">${S.criar
+      <p class="dim">${S.criar
         ? 'Já tem conta? <button class="link" id="alt">Acessar conta</button>'
-        : 'Não tem conta? <button class="link" id="alt">Criar conta</button>'}</p>` : ""}
+        : 'Não tem conta? <button class="link" id="alt">Criar conta</button>'}</p>
     </section>`,
 
   salas: () => `
-    <h1>Escolha a <em>sala</em></h1>
+    <h1>Escolha a sala</h1>
     <div class="salas">${DB.salas.map((s, i) => `
       <button class="sb" data-sala="${i}" style="--c:${TURMAS[i].hex}">
-        <span style="width:70px">${s.camisa
-          ? `<img alt="" src="${s.camisa}" style="width:100%;height:70px;object-fit:contain;image-rendering:auto">`
-          : shirt(TURMAS[i].hex)}</span>
+        ${foto(i)}
         <span>${esc(s.nome)}</span>
-        <span class="dim">R$ ${esc(s.preco)}</span>
+        <span class="preco">R$ ${esc(s.preco)}</span>
       </button>`).join("")}
     </div>`,
 
   sala: () => {
     const s = salaDe(S.sala);
     return `
-    <section class="det">
-      <div class="big">${s.camisa
-        ? `<img alt="Design da camisa" src="${s.camisa}" style="width:100%;height:auto">`
-        : shirt(TURMAS[S.sala].hex)}</div>
+    <section class="box det">
+      <div class="big">${foto(S.sala)}</div>
       <div>
         <h1>${esc(s.nome)}</h1>
         <p>Camisa da cor ${TURMAS[S.sala].cor.toLowerCase()}.</p>
@@ -74,7 +83,7 @@ const V = {
     return `
     <section class="box">
       <h2>PAGUE COM PIX</h2>
-      <p>Camisa <b>${esc(p.nomeCamisa)}</b>, tamanho ${p.tam}, ${esc(s.nome)}. Valor: <span style="color:var(--yellow)">R$ ${esc(p.preco)}</span></p>
+      <p>Camisa <b>${esc(p.nomeCamisa)}</b>, tamanho ${p.tam}, ${esc(s.nome)}. Valor: <b class="price-i">R$ ${esc(p.preco)}</b></p>
       <p class="dim">Chave PIX do representante da sala:</p>
       ${s.pix
         ? `<div class="pixk" id="chave">${esc(s.pix)}</div><button class="go" id="copiar" style="max-width:260px">COPIAR CHAVE</button>`
@@ -96,7 +105,7 @@ const V = {
       <form id="f" novalidate>
         <label>Nome da sala<input id="pn" value="${esc(s.nome)}" maxlength="30"></label>
         <label>Arquivo da camisa (imagem do design)<input id="pm" type="file" accept="image/*"></label>
-        ${s.camisa ? `<img alt="Design atual da camisa" src="${s.camisa}" width="120">` : ""}
+        <div id="prev" class="foto prev">${foto(i).replace(/^<div[^>]*>|<\/div>$/g, "")}</div>
         <label>Preço da camisa (R$)<input id="pp" value="${esc(s.preco)}"></label>
         <label>Chave PIX<input id="px" value="${esc(s.pix)}"></label>
         <label>Contato para comprovante (WhatsApp)<input id="pc" value="${esc(s.contato)}" placeholder="(81) 99999-9999"></label>
@@ -114,6 +123,7 @@ const V = {
 // Fala do mascote em cada tela.
 const MSG = {
   entrada: () => ["Oi! Eu sou o mascote do site. Bem-vindo às camisas do Intergil!", "Escolha como você quer entrar."],
+  cadastro: () => "Você já tem cadastro? Escolha uma opção.",
   acesso: () => S.criar ? "Vamos criar a sua conta! Preencha os campos." : "Que bom te ver! Acesse a sua conta.",
   salas: () => "Escolha a sala da sua camisa.",
   sala: () => "Olha o design e o preço! Gostou? Aperte comprar.",
@@ -123,4 +133,4 @@ const MSG = {
 };
 
 // Para onde o botão VOLTAR leva em cada tela.
-const BACK = { acesso: "entrada", sala: "salas", pedido: "sala", pix: "salas" };
+const BACK = { cadastro: "entrada", acesso: "cadastro", sala: "salas", pedido: "sala", pix: "salas" };
