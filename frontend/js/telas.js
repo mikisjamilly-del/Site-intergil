@@ -1,6 +1,9 @@
 // Telas do site: cada função devolve o HTML de uma tela.
 const opts = sel => TURMAS.map((t, i) => `<option value="${i}"${i === sel ? " selected" : ""}>Turma ${t.cor}</option>`).join("");
 
+const rotuloPedido = p => p.status === "aguardando_pagamento" && p.pagamento === "informado" ? "pagamento informado"
+  : ({ aguardando_pagamento: "aguardando pagamento", pago: "pago", entregue: "entregue", cancelado: "cancelado" })[p.status] || p.status;
+
 const V = {
   entrada: () => `
     <section class="hero">
@@ -33,7 +36,11 @@ const V = {
         <label>Nome completo<input id="nome" autocomplete="name" placeholder="Ex.: Maria da Silva Souza"></label>
         <label>Número da chamada<input id="num" inputmode="numeric" placeholder="Seu número na chamada"></label>
         <label>Turma<select id="turma"><option value="">Selecione sua turma</option>${opts(-1)}</select></label>
-        ${S.papel !== "aluno" ? '<label>Senha<input id="senha" type="password" autocomplete="off" placeholder="Senha de acesso"></label>' : ""}
+        ${S.papel !== "aluno"
+          ? '<label>Senha<input id="senha" type="password" autocomplete="off" placeholder="Senha de acesso"></label>'
+          : S.criar
+            ? '<label>Crie sua senha<input id="senha" type="password" autocomplete="new-password" placeholder="Mínimo de 4 caracteres"></label><label>Repita a senha<input id="senha2" type="password" autocomplete="new-password" placeholder="Digite a mesma senha"></label>'
+            : '<label>Sua senha<input id="senha" type="password" autocomplete="current-password" placeholder="A senha que você criou"></label>'}
         <p class="err" id="err" role="alert"></p>
         <button class="go" type="submit">${S.criar ? "CRIAR CONTA" : "ENTRAR"}</button>
       </form>
@@ -91,6 +98,9 @@ const V = {
       <p class="dim">Depois de pagar, envie o comprovante para:</p>
       <p>${s.contato ? esc(s.contato) : "contato ainda não cadastrado"}</p>
       ${d.length >= 10 ? `<a class="go" style="max-width:300px" target="_blank" rel="noopener" href="https://wa.me/${d.length <= 11 ? "55" : ""}${d}">ENVIAR COMPROVANTE</a>` : ""}
+      ${p.pagamento === "informado" || p.status === "pago"
+        ? `<p class="aviso">${p.status === "pago" ? "Pagamento confirmado pelo representante." : "Pagamento informado. Aguarde a confirmação do representante."}</p>`
+        : '<button class="go" id="paguei" style="max-width:300px">JÁ FIZ O PAGAMENTO</button>'}
       <p><button class="link" id="fim">Voltar para as salas</button></p>
     </section>`;
   },
@@ -114,7 +124,12 @@ const V = {
       </form>
       <h2 style="margin-top:24px">PEDIDOS (${ps.length})</h2>
       ${ps.length
-        ? ps.map(p => `<div class="ped">${esc(p.comprador)} (nº ${esc(p.num)})${adm ? " · " + esc(salaDe(p.sala).nome) : ""}: "${esc(p.nomeCamisa)}", tam ${p.tam}</div>`).join("")
+        ? ps.map(p => `<div class="ped">
+            <div>${esc(p.comprador)} (nº ${esc(p.num)})${adm ? " · " + esc(salaDe(p.sala).nome) : ""}: "${esc(p.nomeCamisa)}", tam ${p.tam}, R$ ${esc(p.preco)}</div>
+            <div class="linha"><b class="st st-${p.status === "aguardando_pagamento" && p.pagamento === "informado" ? "informado" : p.status}">${rotuloPedido(p)}</b>
+              ${p.status === "aguardando_pagamento" && p.pagamento === "informado" ? `<button class="mb" data-acao="confirmar" data-ped="${p.id}">Confirmar pagamento</button><button class="mb ruim" data-acao="recusar" data-ped="${p.id}">Recusar</button>` : ""}
+              ${p.status === "pago" ? `<button class="mb" data-acao="entregar" data-ped="${p.id}">Marcar entregue</button>` : ""}
+            </div></div>`).join("")
         : '<p class="dim">Nenhum pedido ainda.</p>'}
     </section>`;
   },

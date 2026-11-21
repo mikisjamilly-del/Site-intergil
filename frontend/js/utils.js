@@ -26,3 +26,17 @@ function fotoErro(img) {
     img.parentNode.innerHTML = shirt(TURMAS[i].hex);
   }
 }
+
+// Senha do aluno: guardamos só um "resumo" (hash) dela, nunca a senha em si.
+// Atenção: no navegador isso é só uma proteção básica. A proteção de verdade vem do back end.
+const sal = () => [...crypto.getRandomValues(new Uint8Array(8))].map(x => x.toString(16).padStart(2, "0")).join("");
+async function hash(senha, s) {
+  const txt = s + senha;
+  if (window.crypto && crypto.subtle) {
+    const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt));
+    return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+  }
+  let h = 5381;
+  for (const c of txt) h = ((h << 5) + h + c.charCodeAt(0)) | 0;
+  return "f" + (h >>> 0).toString(16);
+}

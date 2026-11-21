@@ -11,3 +11,6 @@ const save = () => {
   try { localStorage.setItem("intergil", JSON.stringify(DB)); } catch (e) {}
 };
 const salaDe = i => DB.salas[i];
+
+// Pedidos antigos não tinham número nem status: completa aqui.
+DB.pedidos.forEach((p, i) => { p.id = p.id || Date.now() + i; p.status = p.status || "aguardando_pagamento"; });

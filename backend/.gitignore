@@ -1,0 +1,4 @@
+comprovantes/
+uploads/
+node_modules/
+.env

@@ -163,3 +163,15 @@ input, select {
 
 .picks.duas { grid-template-columns: repeat(2, 1fr); margin-bottom: 8px; }
 @media (max-width: 700px) { .picks.duas { grid-template-columns: 1fr; } }
+
+/* ===== Pedidos e pagamento ===== */
+.aviso { background: #fff; border: 3px solid var(--grama-esc); padding: 10px 12px; margin: 12px 0; }
+.ped .linha { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+.st { font: 400 9px "Press Start 2P", monospace; padding: 5px 7px; border: 3px solid var(--tinta); background: #fff; }
+.st-informado { background: var(--ouro); }
+.st-pago { background: #b9efb0; }
+.st-entregue { background: #c9d7ff; }
+.st-cancelado { background: #ffc9c9; }
+.mb { font: 18px VT323, monospace; padding: 4px 10px; cursor: pointer; background: #fff; color: var(--tinta); border: 3px solid var(--tinta); }
+.mb:hover { background: var(--ouro); }
+.mb.ruim:hover { background: #ffc9c9; }

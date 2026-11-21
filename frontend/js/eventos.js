@@ -15,23 +15,34 @@ function bindAcesso() {
   const a = $("alt");
   if (a) a.onclick = () => { S.criar = !S.criar; go("acesso"); };
 
-  $("f").onsubmit = e => {
+  $("f").onsubmit = async e => {
     e.preventDefault();
-    const nome = $("nome").value.trim(), num = $("num").value.trim(), t = $("turma").value;
+    const nome = $("nome").value.trim(), num = $("num").value.trim(), t = $("turma").value, senha = $("senha").value;
     const er = m => { $("err").textContent = "* " + m; dizer(m); };
 
     if (nome.split(/\s+/).length < 2 || !num || t === "") return er("Preencha nome completo, número da chamada e turma.");
-    if (S.papel !== "aluno" && $("senha").value !== SENHAS[S.papel]) return er("Senha incorreta. Tente de novo.");
+    if (S.papel !== "aluno" && senha !== SENHAS[S.papel]) return er("Senha incorreta. Tente de novo.");
+    if (S.papel === "aluno") {
+      if (!senha) return er("Digite a sua senha.");
+      if (S.criar && senha.length < 4) return er("A senha precisa ter pelo menos 4 caracteres.");
+      if (S.criar && senha !== $("senha2").value) return er("As duas senhas não são iguais.");
+    }
 
     const u = { nome, num, turma: +t, papel: S.papel };
     const k = c => [c.nome.toLowerCase(), c.num, c.turma, c.papel || "aluno"].join("|");
-    const ex = DB.contas.some(c => k(c) === k(u));
+    const conta = DB.contas.find(c => k(c) === k(u));
 
     if (S.criar) {
-      if (ex) return er("Essa conta já existe. Acesse a conta.");
+      if (conta) return er("Essa conta já existe. Acesse a conta.");
+      if (S.papel === "aluno") { u.sal = sal(); u.senha = await hash(senha, u.sal); }
       DB.contas.push(u); save();
-    } else if (!ex) return er("Conta não encontrada. Use Criar conta.");
-    S.user = u; S.edit = u.turma;
+    } else if (!conta) {
+      return er("Conta não encontrada. Use Criar conta.");
+    } else if (S.papel === "aluno") {
+      if (!conta.senha) { conta.sal = sal(); conta.senha = await hash(senha, conta.sal); save(); }  // conta antiga: esta senha passa a valer
+      else if (await hash(senha, conta.sal) !== conta.senha) return er("Senha incorreta. Tente de novo.");
+    }
+    S.user = { nome, num, turma: +t, papel: S.papel }; S.edit = +t;
     go(S.papel === "aluno" ? "salas" : "painel");
   };
 }
@@ -49,7 +60,7 @@ function bindPedido() {
     e.preventDefault();
     const nc = $("nc").value.trim(), tam = $("tam").value;
     if (!nc || !tam) { $("err").textContent = "* Preencha o nome da camisa e o tamanho."; return; }
-    S.ped = { sala: S.sala, nomeCamisa: nc, tam, preco: salaDe(S.sala).preco, comprador: S.user.nome, num: S.user.num };
+    S.ped = { id: Date.now(), sala: S.sala, nomeCamisa: nc, tam, preco: salaDe(S.sala).preco, comprador: S.user.nome, num: S.user.num, status: "aguardando_pagamento", pagamento: "", criadoEm: new Date().toISOString() };
     DB.pedidos.push(S.ped); save(); go("pix");
   };
 }
@@ -60,11 +71,22 @@ function bindPix() {
     try { navigator.clipboard.writeText(salaDe(S.sala).pix); dizer("Chave copiada!"); }
     catch (e) { dizer("Não deu para copiar. Copie a chave na mão."); }
   };
+  const pg = $("paguei");
+  if (pg) pg.onclick = () => { S.ped.pagamento = "informado"; save(); go("pix"); dizer("Avisei o representante! Ele vai conferir o seu pagamento."); };
   $("fim").onclick = () => go("salas");
 }
 
 function bindPainel() {
   S.masc = null;
+  document.querySelectorAll("[data-acao]").forEach(b => b.onclick = () => {
+    const p = DB.pedidos.find(x => String(x.id) === b.dataset.ped);
+    if (!p) return;
+    const ac = b.dataset.acao;
+    if (ac === "confirmar") { p.status = "pago"; p.pagamento = "confirmado"; }
+    if (ac === "recusar") { p.pagamento = "recusado"; }
+    if (ac === "entregar") { p.status = "entregue"; }
+    save(); go("painel");
+  });
   const ql = $("qual");
   if (ql) ql.onchange = () => { S.edit = +ql.value; go("painel"); };
 
