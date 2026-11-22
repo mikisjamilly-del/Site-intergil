@@ -1,9 +1,6 @@
 // Telas do site: cada função devolve o HTML de uma tela.
 const opts = sel => TURMAS.map((t, i) => `<option value="${i}"${i === sel ? " selected" : ""}>Turma ${t.cor}</option>`).join("");
 
-const rotuloPedido = p => p.status === "aguardando_pagamento" && p.pagamento === "informado" ? "pagamento informado"
-  : ({ aguardando_pagamento: "aguardando pagamento", pago: "pago", entregue: "entregue", cancelado: "cancelado" })[p.status] || p.status;
-
 const V = {
   entrada: () => `
     <section class="hero">
@@ -19,16 +16,6 @@ const V = {
       <div class="mini" aria-hidden="true">${TURMAS.map(t => shirt(t.hex)).join("")}</div>
     </section>`,
 
-  cadastro: () => `
-    <section class="box">
-      <h2 style="color:${COR[S.papel]}">${ROT[S.papel].toUpperCase()}</h2>
-      <h1>Você já tem cadastro?</h1>
-      <div class="picks duas">
-        <button data-criar="0" style="--c:#ffd400;--t:#2a1b5e">JÁ TENHO CADASTRO</button>
-        <button data-criar="1" style="--c:#5cb34a;--t:#fff">AINDA NÃO TENHO</button>
-      </div>
-    </section>`,
-
   acesso: () => `
     <section class="box">
       <h2 style="color:${COR[S.papel]}">${S.criar ? "CRIAR CONTA" : "ACESSAR CONTA"} · ${ROT[S.papel].toUpperCase()}</h2>
@@ -36,17 +23,14 @@ const V = {
         <label>Nome completo<input id="nome" autocomplete="name" placeholder="Ex.: Maria da Silva Souza"></label>
         <label>Número da chamada<input id="num" inputmode="numeric" placeholder="Seu número na chamada"></label>
         <label>Turma<select id="turma"><option value="">Selecione sua turma</option>${opts(-1)}</select></label>
-        ${S.papel !== "aluno"
-          ? '<label>Senha<input id="senha" type="password" autocomplete="off" placeholder="Senha de acesso"></label>'
-          : S.criar
-            ? '<label>Crie sua senha<input id="senha" type="password" autocomplete="new-password" placeholder="Mínimo de 4 caracteres"></label><label>Repita a senha<input id="senha2" type="password" autocomplete="new-password" placeholder="Digite a mesma senha"></label>'
-            : '<label>Sua senha<input id="senha" type="password" autocomplete="current-password" placeholder="A senha que você criou"></label>'}
+        <label>Senha<input id="senha" type="password" autocomplete="${S.criar ? "new-password" : "current-password"}" placeholder="${S.papel !== "aluno" ? "Senha de acesso" : S.criar ? "Crie uma senha (mín. 4 caracteres)" : "Sua senha"}"></label>
+        ${S.criar && S.papel === "aluno" ? '<label>Confirmar senha<input id="senha2" type="password" autocomplete="new-password" placeholder="Repita a senha"></label>' : ""}
         <p class="err" id="err" role="alert"></p>
         <button class="go" type="submit">${S.criar ? "CRIAR CONTA" : "ENTRAR"}</button>
       </form>
-      <p class="dim">${S.criar
+      ${S.papel === "aluno" ? `<p class="dim">${S.criar
         ? 'Já tem conta? <button class="link" id="alt">Acessar conta</button>'
-        : 'Não tem conta? <button class="link" id="alt">Criar conta</button>'}</p>
+        : 'Não tem conta? <button class="link" id="alt">Criar conta</button>'}</p>` : ""}
     </section>`,
 
   salas: () => `
@@ -78,6 +62,7 @@ const V = {
       <h2>CONFIRMAR PEDIDO · ${esc(salaDe(S.sala).nome)}</h2>
       <form id="f" novalidate>
         <label>Nome na camisa<input id="nc" maxlength="20" placeholder="Nome que vai estampado"></label>
+        <label>Número da camisa (opcional)<input id="nn" inputmode="numeric" maxlength="2" placeholder="De 0 a 99"></label>
         <label>Tamanho<select id="tam"><option value="">Selecione</option>${TAM.map(t => `<option>${t}</option>`).join("")}</select></label>
         <p class="price">R$ ${esc(salaDe(S.sala).preco)}</p>
         <p class="err" id="err" role="alert"></p>
@@ -90,7 +75,7 @@ const V = {
     return `
     <section class="box">
       <h2>PAGUE COM PIX</h2>
-      <p>Camisa <b>${esc(p.nomeCamisa)}</b>, tamanho ${p.tam}, ${esc(s.nome)}. Valor: <b class="price-i">R$ ${esc(p.preco)}</b></p>
+      <p>Camisa <b>${esc(p.nomeCamisa)}</b>${p.numCamisa !== "" ? ", nº " + esc(p.numCamisa) : ""}, tamanho ${p.tam}, ${esc(s.nome)}. Valor: <b class="price-i">R$ ${esc(p.preco)}</b></p>
       <p class="dim">Chave PIX do representante da sala:</p>
       ${s.pix
         ? `<div class="pixk" id="chave">${esc(s.pix)}</div><button class="go" id="copiar" style="max-width:260px">COPIAR CHAVE</button>`
@@ -98,16 +83,13 @@ const V = {
       <p class="dim">Depois de pagar, envie o comprovante para:</p>
       <p>${s.contato ? esc(s.contato) : "contato ainda não cadastrado"}</p>
       ${d.length >= 10 ? `<a class="go" style="max-width:300px" target="_blank" rel="noopener" href="https://wa.me/${d.length <= 11 ? "55" : ""}${d}">ENVIAR COMPROVANTE</a>` : ""}
-      ${p.pagamento === "informado" || p.status === "pago"
-        ? `<p class="aviso">${p.status === "pago" ? "Pagamento confirmado pelo representante." : "Pagamento informado. Aguarde a confirmação do representante."}</p>`
-        : '<button class="go" id="paguei" style="max-width:300px">JÁ FIZ O PAGAMENTO</button>'}
       <p><button class="link" id="fim">Voltar para as salas</button></p>
     </section>`;
   },
 
   painel: () => {
     const adm = S.papel === "adm", i = adm ? S.edit : S.user.turma, s = salaDe(i);
-    const ps = DB.pedidos.filter(p => adm || p.sala === i);
+    const ps = DB.pedidos;  // o servidor já filtra a sala do representante; a lista vem em ordem alfabética
     return `
     <section class="box">
       <h2 style="color:${COR[S.papel]}">PAINEL · ${ROT[S.papel].toUpperCase()}</h2>
@@ -122,14 +104,9 @@ const V = {
         <p class="err" id="err" role="alert"></p>
         <button class="go" type="submit">SALVAR</button>
       </form>
-      <h2 style="margin-top:24px">PEDIDOS (${ps.length})</h2>
+      <h2 style="margin-top:24px">PEDIDOS (${ps.length}) · ORDEM ALFABÉTICA</h2>
       ${ps.length
-        ? ps.map(p => `<div class="ped">
-            <div>${esc(p.comprador)} (nº ${esc(p.num)})${adm ? " · " + esc(salaDe(p.sala).nome) : ""}: "${esc(p.nomeCamisa)}", tam ${p.tam}, R$ ${esc(p.preco)}</div>
-            <div class="linha"><b class="st st-${p.status === "aguardando_pagamento" && p.pagamento === "informado" ? "informado" : p.status}">${rotuloPedido(p)}</b>
-              ${p.status === "aguardando_pagamento" && p.pagamento === "informado" ? `<button class="mb" data-acao="confirmar" data-ped="${p.id}">Confirmar pagamento</button><button class="mb ruim" data-acao="recusar" data-ped="${p.id}">Recusar</button>` : ""}
-              ${p.status === "pago" ? `<button class="mb" data-acao="entregar" data-ped="${p.id}">Marcar entregue</button>` : ""}
-            </div></div>`).join("")
+        ? ps.map(p => `<div class="ped"><b>${esc(p.comprador)}</b> (chamada nº ${esc(p.numero_chamada)})${adm ? " · " + esc(p.sala) : ""}: "${esc(p.nome_camisa)}"${p.numero_camisa != null ? ", camisa nº " + esc(p.numero_camisa) : ""}, tam ${esc(p.tamanho)} · R$ ${reais(p.preco_centavos)} · ${esc(ST[p.status] || p.status)}</div>`).join("")
         : '<p class="dim">Nenhum pedido ainda.</p>'}
     </section>`;
   },
@@ -138,7 +115,6 @@ const V = {
 // Fala do mascote em cada tela.
 const MSG = {
   entrada: () => ["Oi! Eu sou o mascote do site. Bem-vindo às camisas do Intergil!", "Escolha como você quer entrar."],
-  cadastro: () => "Você já tem cadastro? Escolha uma opção.",
   acesso: () => S.criar ? "Vamos criar a sua conta! Preencha os campos." : "Que bom te ver! Acesse a sua conta.",
   salas: () => "Escolha a sala da sua camisa.",
   sala: () => "Olha o design e o preço! Gostou? Aperte comprar.",
@@ -148,4 +124,4 @@ const MSG = {
 };
 
 // Para onde o botão VOLTAR leva em cada tela.
-const BACK = { cadastro: "entrada", acesso: "cadastro", sala: "salas", pedido: "sala", pix: "salas" };
+const BACK = { acesso: "entrada", sala: "salas", pedido: "sala", pix: "salas" };

@@ -5,9 +5,9 @@ const TURMAS = [
   ["Amarela", "#ffd400"], ["Cinza", "#9ca3af"], ["Roxa", "#7e22ce"], ["Rosa", "#ec4899"],
 ].map(([cor, hex]) => ({ cor, hex }));
 
-// ATENÇÃO: senhas no front-end ficam visíveis para qualquer pessoa.
-// Quando o back end for ligado, elas devem sair daqui (ficam no .env do servidor).
-const SENHAS = { rep: "intergiljdgr", adm: "valhallajdjr" };
+// As senhas de representante e ADM ficam só no servidor (backend/.env).
+const PAPEL_API = { aluno: "aluno", rep: "representante", adm: "adm" };
+const ST = { aguardando_pagamento: "aguardando pagamento", pago: "pago", entregue: "entregue", cancelado: "cancelado" };
 
 const ROT = { aluno: "aluno", rep: "representante", adm: "administração" };
 const COR = { aluno: "#a86a00", rep: "#2a4fc7", adm: "#c0182b" };

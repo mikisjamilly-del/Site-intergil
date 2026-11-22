@@ -1,4 +1,4 @@
-comprovantes/
+.env
+intergil.db*
 uploads/
 node_modules/
-.env
