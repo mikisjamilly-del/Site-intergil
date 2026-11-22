@@ -9,8 +9,8 @@ services:
     name: camisas-intergil
     runtime: node
     plan: free
-    buildCommand: cd camisas-intergil/backend && npm install
-startCommand: cd camisas-intergil/backend && npm start
+   buildCommand: 'cd "camisas-intergil (6)/camisas-intergil/backend" && npm install'
+startCommand: 'cd "camisas-intergil (6)/camisas-intergil/backend" && npm start'
     healthCheckPath: /saude
     envVars:
       - key: NODE_VERSION
