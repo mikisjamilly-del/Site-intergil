@@ -1,4 +1,3 @@
-# Receita de publicação para o Render (render.com): cria o site + o banco PostgreSQL de uma vez.
 databases:
   - name: intergil-db
     databaseName: intergil
@@ -9,8 +8,10 @@ services:
     name: camisas-intergil
     runtime: node
     plan: free
-   buildCommand: 'cd "camisas-intergil (6)/camisas-intergil/backend" && npm install'
-startCommand: 'cd "camisas-intergil (6)/camisas-intergil/backend" && npm start'
+    buildCommand: |
+      cd "$(dirname "$(find . -path '*/backend/server.js' | head -n 1)")" && npm install
+    startCommand: |
+      cd "$(dirname "$(find . -path '*/backend/server.js' | head -n 1)")" && npm start
     healthCheckPath: /saude
     envVars:
       - key: NODE_VERSION
@@ -22,6 +23,6 @@ startCommand: 'cd "camisas-intergil (6)/camisas-intergil/backend" && npm start'
       - key: JWT_SECRET
         generateValue: true
       - key: SENHA_REPRESENTANTE
-        sync: false        # o Render vai pedir para você digitar
+        sync: false
       - key: SENHA_ADM
-        sync: false        # o Render vai pedir para você digitar
+        sync: false
