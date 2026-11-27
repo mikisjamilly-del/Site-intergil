@@ -36,6 +36,7 @@ function bindAcesso() {
 function bindSalas() {
   document.querySelectorAll("[data-sala]").forEach(b => b.onclick = () => { S.sala = +b.dataset.sala; go("sala"); });
   $("sacola").onclick = () => go("sacola");
+  $("trofeu").onclick = () => go("trofeu");
 }
 
 function bindSacola() {
@@ -98,6 +99,47 @@ function bindPermissoes() {
   });
 }
 
+// Lê a imagem escolhida e reduz para no máximo 480px antes de guardar no banco.
+const lerImagem = f => new Promise((ok, falha) => {
+  const im = new Image();
+  im.onload = () => {
+    const r = Math.min(1, 480 / Math.max(im.width, im.height)), c = document.createElement("canvas");
+    c.width = im.width * r; c.height = im.height * r;
+    c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+    ok(c.toDataURL("image/webp", .85));
+  };
+  im.onerror = () => falha(new Error("Não consegui abrir essa imagem."));
+  im.src = URL.createObjectURL(f);
+});
+
+function bindCampeas() {
+  bindAbas();
+  S.imgCamp = null;
+  $("cimg").onchange = async e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try { S.imgCamp = await lerImagem(f); $("cprev").innerHTML = `<img alt="Prévia da camisa campeã" src="${S.imgCamp}">`; }
+    catch (x) { $("err").textContent = "* " + x.message; }
+  };
+  $("f").onsubmit = async e => {
+    e.preventDefault();
+    const ano = $("cano").value.trim(), nome = $("cnome").value.trim();
+    const er = m => { $("err").textContent = "* " + m; dizer(m); };
+    if (!/^\d{4}$/.test(ano) || !nome) return er("Escreva o ano (4 números) e o nome da sala campeã.");
+    if (!S.imgCamp && !DB.campeas.some(c => c.ano === +ano && c.imagem)) return er("Escolha a foto da camisa campeã.");
+    try {
+      await api("/campeas", "POST", { ano: +ano, nome, imagem_base64: S.imgCamp });
+      S.aviso = "Camisa campeã de " + ano + " salva!";
+      go("campeas");
+    } catch (x) { er(x.message); }
+  };
+  document.querySelectorAll("[data-remcamp]").forEach(b => b.onclick = async () => {
+    if (!confirm("Remover esta camisa campeã?")) return;
+    try { await api("/campeas/" + b.dataset.remcamp, "DELETE"); S.aviso = "Camisa campeã removida."; go("campeas"); }
+    catch (x) { $("err").textContent = "* " + x.message; dizer(x.message); }
+  });
+}
+
 function bindPainel() {
   bindAbas();
   S.masc = null;
@@ -133,7 +175,7 @@ function bindPainel() {
 }
 
 const BINDS = {
-  pedidos: bindAbas,
+  pedidos: bindAbas, campeas: bindCampeas, trofeu: () => {},
   entrada: bindEntrada, acesso: bindAcesso, salas: bindSalas,
   sala: bindSala, pedido: bindPedido, pix: bindPix, painel: bindPainel, sacola: bindSacola, permissoes: bindPermissoes,
 };

@@ -180,3 +180,12 @@ input, select {
   border: 4px solid var(--tinta); box-shadow: 0 4px 0 var(--tinta);
 }
 .aba.on { background: var(--ouro); box-shadow: 0 4px 0 var(--ouro-esc), 0 4px 0 4px var(--tinta); }
+
+/* Troféu e camisas campeãs */
+.topo-btns { display: flex; gap: 18px; flex: none; }
+.camps { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+.camp { text-align: center; border: 4px solid var(--tinta); background: #fff6e0; padding: 10px; }
+.camp-ano { font-size: 24px; color: var(--ouro-esc); margin-bottom: 8px; }
+.camp-nome { margin-top: 8px; }
+.camp-rotulo { margin-top: 8px; font-size: 11px; color: var(--ouro-esc); }
+.miniatura { width: 64px; height: 64px; object-fit: contain; float: left; margin-right: 12px; background: #fff; border: 3px solid var(--tinta); }

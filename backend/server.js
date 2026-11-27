@@ -58,7 +58,7 @@ function auth(...papeis) {
 const token = u => jwt.sign({ id: u.id, papel: u.papel, sala_id: u.sala_id }, JWT_SECRET, { expiresIn: "12h" });
 const salaExiste = async id => Number.isInteger(id) && !!(await um("SELECT 1 FROM salas WHERE id=$1", [id]));
 
-app.get("/saude", h(async (_, res) => { await q("SELECT 1"); res.json({ ok: true }); }));   // a hospedagem usa para saber se está vivo
+app.get("/saude", h(async (_, res) => { await q("SELECT 1"); res.json({ ok: true, versao: 7 }); }));   // a hospedagem usa para saber se está vivo
 
 // --- Autenticação ---
 app.post("/auth/criar", h(async (req, res) => {            // só alunos criam conta
@@ -83,7 +83,10 @@ app.post("/auth/entrar", h(async (req, res) => {
   if (papel === "representante") {
     if (senha !== SENHA_REPRESENTANTE) return recusar(req, res, 401, "Senha incorreta");
     const liberado = await um("SELECT 1 FROM permissoes WHERE sala_id=$1 AND numero_chamada=$2", [sala_id, num]);
-    if (!liberado) return recusar(req, res, 403, "Você ainda não foi liberado pela administração. Peça ao ADM para permitir o seu número da chamada.");
+    if (!liberado) {   // não conta como "senha errada": quem espera a liberação não fica bloqueado
+      const t = await um("SELECT nome FROM salas WHERE id=$1", [sala_id]);
+      return res.status(403).json({ erro: `Não encontrei liberação para ${t.nome}, chamada nº ${num}. Peça ao ADM para liberar exatamente essa turma e esse número.` });
+    }
   }
   if (papel === "adm" && senha !== SENHA_ADM) return recusar(req, res, 401, "Senha incorreta");
 
@@ -173,6 +176,40 @@ app.patch("/pedidos/:id/status", auth("representante", "adm"), h(async (req, res
   if (!p || !["aguardando_pagamento", "pago", "entregue", "cancelado"].includes(status)) return res.status(400).json({ erro: "Dados inválidos" });
   if (req.user.papel === "representante" && p.sala_id !== req.user.sala_id) return res.status(403).json({ erro: "Só a sua sala" });
   await q("UPDATE pedidos SET status=$1 WHERE id=$2", [status, id]);
+  res.json({ ok: true });
+}));
+
+// --- Camisas campeãs (todos veem; só a administração cadastra) ---
+const IMG = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+
+app.get("/campeas", h(async (_, res) => {
+  const lista = await q("SELECT id, ano, nome, (camisa_imagem IS NOT NULL) AS tem_imagem, atualizado_em FROM campeas ORDER BY ano DESC");
+  res.json(lista.map(c => ({ id: c.id, ano: c.ano, nome: c.nome,
+    imagem: c.tem_imagem ? `/campeas/${c.id}/imagem?v=${new Date(c.atualizado_em).getTime()}` : "" })));
+}));
+
+app.get("/campeas/:id/imagem", h(async (req, res) => {
+  const c = await um("SELECT camisa_imagem FROM campeas WHERE id=$1", [+req.params.id || 0]);
+  const m = c && /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec(c.camisa_imagem || "");
+  if (!m) return res.status(404).end();
+  res.set({ "Content-Type": m[1], "Cache-Control": "public, max-age=31536000, immutable" }).send(Buffer.from(m[2], "base64"));
+}));
+
+app.post("/campeas", auth("adm"), h(async (req, res) => {
+  const ano = Number(req.body.ano), nome = limpa(req.body.nome).slice(0, 40), img = req.body.imagem_base64 || null;
+  if (!Number.isInteger(ano) || ano < 1900 || ano > 2100 || !nome) return res.status(400).json({ erro: "Escreva o ano e o nome da sala campeã" });
+  if (img && (!IMG.test(img) || img.length > 2.5e6)) return res.status(400).json({ erro: "Imagem inválida" });
+  const antiga = await um("SELECT camisa_imagem FROM campeas WHERE ano=$1", [ano]);
+  if (!img && !(antiga && antiga.camisa_imagem)) return res.status(400).json({ erro: "Envie a foto da camisa campeã" });   // a foto é obrigatória
+  await q(`INSERT INTO campeas (ano, nome, camisa_imagem) VALUES ($1,$2,$3)
+    ON CONFLICT (ano) DO UPDATE SET nome = EXCLUDED.nome, camisa_imagem = COALESCE(EXCLUDED.camisa_imagem, campeas.camisa_imagem), atualizado_em = now()`, [ano, nome, img]);
+  res.status(201).json({ ok: true });
+}));
+
+app.delete("/campeas/:id", auth("adm"), h(async (req, res) => {
+  const id = +req.params.id;
+  if (!Number.isInteger(id)) return res.status(404).json({ erro: "Não encontrado" });
+  await q("DELETE FROM campeas WHERE id=$1", [id]);
   res.json({ ok: true });
 }));
 

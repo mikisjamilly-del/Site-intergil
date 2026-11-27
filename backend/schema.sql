@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS permissoes (
   UNIQUE (sala_id, numero_chamada)
 );
 
+-- Camisas campeãs de cada ano do Intergil (cadastradas pela administração)
+CREATE TABLE IF NOT EXISTS campeas (
+  id              SERIAL PRIMARY KEY,
+  ano             INTEGER NOT NULL UNIQUE CHECK (ano BETWEEN 1900 AND 2100),
+  nome            TEXT NOT NULL,            -- turma ou nome da camisa campeã
+  camisa_imagem   TEXT,                     -- imagem guardada no banco (data URL)
+  atualizado_em   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS pedidos (
   id              SERIAL PRIMARY KEY,
   usuario_id      INTEGER NOT NULL REFERENCES usuarios(id),

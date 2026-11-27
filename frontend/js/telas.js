@@ -1,9 +1,9 @@
 // Telas do site: cada função devolve o HTML de uma tela.
 const opts = sel => TURMAS.map((t, i) => `<option value="${i}"${i === sel ? " selected" : ""}>Turma ${t.cor}</option>`).join("");
 
-// Abas do painel. Representante: Pedido | Edição.  ADM: Salas | Pedidos | Permissões.
+// Abas do painel. Representante: Pedido | Edição.  ADM: Salas | Pedidos | Permissões | Campeãs.
 const abas = atual => `<div class="abas">${(S.papel === "adm"
-  ? [["painel", "SALAS"], ["pedidos", "PEDIDOS"], ["permissoes", "PERMISSÕES"]]
+  ? [["painel", "SALAS"], ["pedidos", "PEDIDOS"], ["permissoes", "PERMISSÕES"], ["campeas", "CAMPEÃS"]]
   : [["pedidos", "PEDIDO"], ["painel", "EDIÇÃO"]])
   .map(([v, t]) => `<button type="button" class="aba${v === atual ? " on" : ""}" data-aba="${v}">${t}</button>`).join("")}</div>`;
 
@@ -42,10 +42,15 @@ const V = {
   salas: () => `
     <div class="topo">
       <h1>Escolha a sala</h1>
+      <div class="topo-btns">
+      <button class="sacola" id="trofeu" aria-label="Camisas campeãs do Intergil">
+        <svg viewBox="0 0 16 16" width="30" height="30" aria-hidden="true" shape-rendering="crispEdges"><rect fill="currentColor" x="4" y="1" width="8" height="7"/><rect fill="currentColor" x="1" y="2" width="3" height="4"/><rect fill="currentColor" x="12" y="2" width="3" height="4"/><rect fill="currentColor" x="7" y="8" width="2" height="3"/><rect fill="currentColor" x="5" y="11" width="6" height="2"/><rect fill="currentColor" x="4" y="13" width="8" height="2"/></svg>
+      </button>
       <button class="sacola" id="sacola" aria-label="Minha sacola (${DB.meus.filter(p => p.status !== "cancelado").length} pedidos)">
         <svg viewBox="0 0 16 16" width="30" height="30" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M5 6V4h1V3h4v1h1v2h-1V4H6v2z"/><rect fill="currentColor" x="2" y="6" width="12" height="9"/></svg>
         ${DB.meus.filter(p => p.status !== "cancelado").length ? `<span class="sac-n">${DB.meus.filter(p => p.status !== "cancelado").length}</span>` : ""}
       </button>
+      </div>
     </div>
     <div class="salas">${DB.salas.map((s, i) => `
       <button class="sb" data-sala="${i}" style="--c:${TURMAS[i].hex}">
@@ -110,6 +115,40 @@ const V = {
           ${p.status === "aguardando_pagamento" ? `<br><button class="go cancelar" data-cancelar="${p.id}">CANCELAR PEDIDO</button>` : ""}
         </div>`).join("") : '<p class="dim">Você ainda não fez nenhum pedido.</p>'}
       <p class="err" id="err" role="alert"></p>
+    </section>`,
+
+  trofeu: () => `
+    <section class="box">
+      <h2>CAMISAS CAMPEÃS DO INTERGIL</h2>
+      ${DB.campeas.length ? `<div class="camps">${DB.campeas.map(c => `
+        <div class="camp">
+          <div class="camp-ano">${esc(c.ano)}</div>
+          <div class="foto camp-foto" style="--c:#ffd400">${c.imagem ? `<img alt="Camisa campeã de ${esc(c.ano)}" src="${esc(c.imagem)}">` : shirt("#ffd400")}</div>
+          <div class="camp-rotulo">SALA CAMPEÃ</div>
+          <div class="camp-nome">${esc(c.nome)}</div>
+        </div>`).join("")}</div>` : '<p class="dim">A administração ainda não cadastrou as camisas campeãs.</p>'}
+    </section>`,
+
+  campeas: () => `
+    <section class="box">
+      <h2 style="color:${COR.adm}">PAINEL · ${ROT.adm.toUpperCase()}</h2>
+      ${abas("campeas")}
+      <h2>CAMISAS CAMPEÃS</h2>
+      <p class="dim">Para cada ano, informe o ano, o nome da sala que ganhou e a foto da camisa. Para trocar um ano, cadastre o mesmo ano de novo.</p>
+      <form id="f" novalidate>
+        <label>Ano<input id="cano" inputmode="numeric" maxlength="4" placeholder="Ex.: 2025"></label>
+        <label>Nome da sala campeã<input id="cnome" list="salasnomes" maxlength="40" placeholder="Ex.: Turma Verde" autocomplete="off"></label>
+        <datalist id="salasnomes">${DB.salas.map(s => `<option value="${esc(s.nome)}">`).join("")}</datalist>
+        <label>Foto da camisa (obrigatória)<input id="cimg" type="file" accept="image/*"></label>
+        <div id="cprev" class="foto prev" style="--c:#ffd400"></div>
+        <p class="err" id="err" role="alert"></p>
+        <button class="go" type="submit">SALVAR CAMPEÃ</button>
+      </form>
+      <h2 style="margin-top:24px">CADASTRADAS (${DB.campeas.length})</h2>
+      ${DB.campeas.length ? DB.campeas.map(c => `
+        <div class="ped">${c.imagem ? `<img class="miniatura" alt="Camisa de ${esc(c.ano)}" src="${esc(c.imagem)}">` : ""}
+          <b>${esc(c.ano)}</b> · Sala campeã: ${esc(c.nome)}${c.imagem ? "" : " · SEM FOTO (cadastre de novo com a foto)"}
+          <br><button class="go cancelar" data-remcamp="${c.id}">REMOVER</button></div>`).join("") : '<p class="dim">Nenhuma camisa campeã cadastrada.</p>'}
     </section>`,
 
   permissoes: () => `
@@ -178,9 +217,11 @@ const MSG = {
   pix: () => "Pedido feito! Agora é só pagar no PIX e mandar o comprovante.",
   sacola: () => { const a = S.aviso; S.aviso = null; return a || "Estes são os seus pedidos. Dá para cancelar os que ainda não foram pagos."; },
   permissoes: () => { const a = S.aviso; S.aviso = null; return a || "Aqui você libera quem pode entrar como representante."; },
+  trofeu: () => "Estas são as camisas campeãs de cada ano do Intergil!",
+  campeas: () => { const a = S.aviso; S.aviso = null; return a || "Aqui você cadastra a camisa campeã de cada ano."; },
   painel: () => S.papel === "adm" ? "Aqui você edita as salas: nome, design, preço, PIX e tamanhos." : "Aqui você edita a sua sala: nome, design da camisa, preço e PIX.",
   pedidos: () => S.papel === "adm" ? "Todos os pedidos de todas as salas, em ordem alfabética." : "Estes são os pedidos da sua sala, em ordem alfabética.",
 };
 
 // Para onde o botão VOLTAR leva em cada tela.
-const BACK = { acesso: "entrada", sala: "salas", pedido: "sala", pix: "salas", sacola: "salas" };
+const BACK = { acesso: "entrada", sala: "salas", pedido: "sala", pix: "salas", sacola: "salas", trofeu: "salas" };

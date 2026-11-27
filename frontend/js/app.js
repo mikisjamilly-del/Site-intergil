@@ -8,6 +8,8 @@ async function go(v) {
     if (v === "salas" || v === "sacola") await carregarMeus();
     if (v === "pedidos") await carregarPedidos();
     if (v === "permissoes") await carregarPerms();
+    if (v === "trofeu" || v === "campeas") await carregarCampeas();
+    if (v === "campeas") await carregarSalas();
   } catch (e) {
     $("app").innerHTML = `<section class="box"><p class="err">* ${esc(e.message)}</p></section>`;
     $("bVoltar").hidden = true; $("bSair").hidden = !logado();
@@ -15,11 +17,16 @@ async function go(v) {
     return;
   }
   S.v = v;
-  $("app").innerHTML = V[v]();
-  bind(v);
+  try {
+    $("app").innerHTML = V[v]();
+    bind(v);
+    dizer(MSG[v]());
+  } catch (e) {   // se algum arquivo do site estiver desatualizado, o erro aparece na tela em vez de travar em silêncio
+    console.error(e);
+    $("app").innerHTML = `<section class="box"><p class="err">* Erro ao abrir a tela "${esc(v)}": ${esc(e.message)}<br>Confira se todos os arquivos do site foram atualizados (a versão aparece no rodapé).</p></section>`;
+  }
   $("bVoltar").hidden = !BACK[v];
   $("bSair").hidden = !logado();
-  dizer(MSG[v]());
   scrollTo(0, 0);
 }
 
