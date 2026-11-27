@@ -240,7 +240,7 @@ app.delete("/permissoes/:id", auth("adm"), h(async (req, res) => {
 }));
 
 // O próprio servidor entrega o site (pasta frontend)
-app.use(express.static(path.join(__dirname, "..", "frontend")));
+app.use(express.static(path.join(__dirname, "frontend")));
 
 // Qualquer erro inesperado aparece no log (para achar a causa) e volta como JSON para o site.
 app.use((err, req, res, next) => {
