@@ -34,7 +34,13 @@ const V = {
     </section>`,
 
   salas: () => `
-    <h1>Escolha a sala</h1>
+    <div class="topo">
+      <h1>Escolha a sala</h1>
+      <button class="sacola" id="sacola" aria-label="Minha sacola (${DB.meus.filter(p => p.status !== "cancelado").length} pedidos)">
+        <svg viewBox="0 0 16 16" width="30" height="30" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M5 6V4h1V3h4v1h1v2h-1V4H6v2z"/><rect fill="currentColor" x="2" y="6" width="12" height="9"/></svg>
+        ${DB.meus.filter(p => p.status !== "cancelado").length ? `<span class="sac-n">${DB.meus.filter(p => p.status !== "cancelado").length}</span>` : ""}
+      </button>
+    </div>
     <div class="salas">${DB.salas.map((s, i) => `
       <button class="sb" data-sala="${i}" style="--c:${TURMAS[i].hex}">
         ${foto(i)}
@@ -62,8 +68,8 @@ const V = {
       <h2>CONFIRMAR PEDIDO · ${esc(salaDe(S.sala).nome)}</h2>
       <form id="f" novalidate>
         <label>Nome na camisa<input id="nc" maxlength="20" placeholder="Nome que vai estampado"></label>
-        <label>Número da camisa (opcional)<input id="nn" inputmode="numeric" maxlength="2" placeholder="De 0 a 99"></label>
-        <label>Tamanho<select id="tam"><option value="">Selecione</option>${TAM.map(t => `<option>${t}</option>`).join("")}</select></label>
+        <label>Número da camisa (opcional)<input id="nn" maxlength="20" placeholder="Escreva o que quiser: 10, 7+1, ★, ..."></label>
+        <label>Tamanho<select id="tam"><option value="">Selecione</option>${(salaDe(S.sala).tamanhos || TAM).map(t => `<option>${esc(t)}</option>`).join("")}</select></label>
         <p class="price">R$ ${esc(salaDe(S.sala).preco)}</p>
         <p class="err" id="err" role="alert"></p>
         <button class="go" type="submit">CONFIRMAR</button>
@@ -75,7 +81,8 @@ const V = {
     return `
     <section class="box">
       <h2>PAGUE COM PIX</h2>
-      <p>Camisa <b>${esc(p.nomeCamisa)}</b>${p.numCamisa !== "" ? ", nº " + esc(p.numCamisa) : ""}, tamanho ${p.tam}, ${esc(s.nome)}. Valor: <b class="price-i">R$ ${esc(p.preco)}</b></p>
+      <p>Camisa <b>${esc(p.nomeCamisa)}</b>${p.numCamisa !== "" ? ", nº " + esc(p.numCamisa) : ""}, tamanho ${p.tam}, ${esc(s.nome)}. Valor total: <b class="price-i">R$ ${esc(p.preco)}</b>, dividido em 2 parcelas:</p>
+      ${parcelas(p.preco).map((v, i) => `<div class="ped">${i + 1}ª parcela: <b class="price-i">R$ ${v}</b></div>`).join("")}
       <p class="dim">Chave PIX do representante da sala:</p>
       ${s.pix
         ? `<div class="pixk" id="chave">${esc(s.pix)}</div><button class="go" id="copiar" style="max-width:260px">COPIAR CHAVE</button>`
@@ -86,6 +93,18 @@ const V = {
       <p><button class="link" id="fim">Voltar para as salas</button></p>
     </section>`;
   },
+
+  sacola: () => `
+    <section class="box">
+      <h2>MINHA SACOLA</h2>
+      ${DB.meus.length ? DB.meus.map(p => `
+        <div class="ped${p.status === "cancelado" ? " canc" : ""}">
+          <b>${esc(p.sala)}</b>: "${esc(p.nome_camisa)}"${p.numero_camisa != null ? ", nº " + esc(p.numero_camisa) : ""}, tam ${esc(p.tamanho)} · R$ ${reais(p.preco_centavos)}
+          (2 parcelas de R$ ${parcelas(reais(p.preco_centavos)).join(" e R$ ")}) · ${esc(ST[p.status] || p.status)}
+          ${p.status === "aguardando_pagamento" ? `<br><button class="go cancelar" data-cancelar="${p.id}">CANCELAR PEDIDO</button>` : ""}
+        </div>`).join("") : '<p class="dim">Você ainda não fez nenhum pedido.</p>'}
+      <p class="err" id="err" role="alert"></p>
+    </section>`,
 
   painel: () => {
     const adm = S.papel === "adm", i = adm ? S.edit : S.user.turma, s = salaDe(i);
@@ -99,6 +118,7 @@ const V = {
         <label>Arquivo da camisa (imagem do design)<input id="pm" type="file" accept="image/*"></label>
         <div id="prev" class="foto prev">${foto(i).replace(/^<div[^>]*>|<\/div>$/g, "")}</div>
         <label>Preço da camisa (R$)<input id="pp" value="${esc(s.preco)}"></label>
+        ${adm ? `<label>Tamanhos disponíveis (separe por vírgula)<input id="pt" value="${esc((s.tamanhos || TAM).join(", "))}" placeholder="P, M, G, GG, XG"></label>` : ""}
         <label>Chave PIX<input id="px" value="${esc(s.pix)}"></label>
         <label>Contato para comprovante (WhatsApp)<input id="pc" value="${esc(s.contato)}" placeholder="(81) 99999-9999"></label>
         <p class="err" id="err" role="alert"></p>
@@ -120,8 +140,9 @@ const MSG = {
   sala: () => "Olha o design e o preço! Gostou? Aperte comprar.",
   pedido: () => "Diga o nome da camisa e o tamanho.",
   pix: () => "Pedido feito! Agora é só pagar no PIX e mandar o comprovante.",
+  sacola: () => { const a = S.aviso; S.aviso = null; return a || "Estes são os seus pedidos. Dá para cancelar os que ainda não foram pagos."; },
   painel: () => "Aqui você cuida da sala: nome, design da camisa, preço e PIX.",
 };
 
 // Para onde o botão VOLTAR leva em cada tela.
-const BACK = { acesso: "entrada", sala: "salas", pedido: "sala", pix: "salas" };
+const BACK = { acesso: "entrada", sala: "salas", pedido: "sala", pix: "salas", sacola: "salas" };

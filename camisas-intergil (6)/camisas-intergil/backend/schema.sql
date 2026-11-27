@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS salas (
   atualizado_em   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Tamanhos que a administração libera para cada sala (separados por vírgula)
+ALTER TABLE salas ADD COLUMN IF NOT EXISTS tamanhos TEXT NOT NULL DEFAULT 'P,M,G,GG,XG';
+
 CREATE TABLE IF NOT EXISTS usuarios (
   id              SERIAL PRIMARY KEY,
   nome            TEXT NOT NULL,
@@ -31,13 +34,17 @@ CREATE TABLE IF NOT EXISTS pedidos (
   usuario_id      INTEGER NOT NULL REFERENCES usuarios(id),
   sala_id         INTEGER NOT NULL REFERENCES salas(id),
   nome_camisa     TEXT NOT NULL,
-  numero_camisa   INTEGER CHECK (numero_camisa IS NULL OR numero_camisa BETWEEN 0 AND 99),
-  tamanho         TEXT NOT NULL CHECK (tamanho IN ('P','M','G','GG','XG')),
+  numero_camisa   TEXT,                     -- qualquer texto (até 20 caracteres, validado no servidor)
+  tamanho         TEXT NOT NULL,            -- precisa estar na lista de tamanhos da sala (validado no servidor)
   preco_centavos  INTEGER NOT NULL,         -- preço no momento da compra
   status          TEXT NOT NULL DEFAULT 'aguardando_pagamento'
                   CHECK (status IN ('aguardando_pagamento','pago','entregue','cancelado')),
   criado_em       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Atualiza bancos criados em versões anteriores: número livre e tamanhos definidos pela administração
+ALTER TABLE pedidos DROP CONSTRAINT IF EXISTS pedidos_tamanho_check;
+ALTER TABLE pedidos DROP CONSTRAINT IF EXISTS pedidos_numero_camisa_check;
+ALTER TABLE pedidos ALTER COLUMN numero_camisa TYPE TEXT USING numero_camisa::text;
 CREATE INDEX IF NOT EXISTS idx_pedidos_sala    ON pedidos(sala_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_usuario ON pedidos(usuario_id);
 

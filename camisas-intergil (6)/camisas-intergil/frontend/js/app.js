@@ -5,6 +5,7 @@ const logado = () => !!S.user;
 async function go(v) {
   try {
     if (v === "salas" || v === "painel") await carregarSalas();
+    if (v === "salas" || v === "sacola") await carregarMeus();
     if (v === "painel") await carregarPedidos();
   } catch (e) {
     $("app").innerHTML = `<section class="box"><p class="err">* ${esc(e.message)}</p></section>`;

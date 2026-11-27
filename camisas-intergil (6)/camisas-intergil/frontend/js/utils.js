@@ -29,3 +29,9 @@ function fotoErro(img) {
 
 // Centavos -> "50,00"
 const reais = c => (c / 100).toFixed(2).replace(".", ",");
+
+// Divide o valor total ("50,00") em 2 parcelas; se sobrar 1 centavo, ele fica na 1ª.
+const parcelas = preco => {
+  const t = Math.round(parseFloat(String(preco).replace(",", ".")) * 100), a = Math.ceil(t / 2);
+  return [reais(a), reais(t - a)];
+};

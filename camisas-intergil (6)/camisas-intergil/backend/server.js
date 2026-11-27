@@ -24,10 +24,10 @@ const h = fn => (req, res, next) => fn(req, res, next).catch(next);   // erros a
 const reais = c => (c / 100).toFixed(2).replace(".", ",");
 const centavos = s => Math.round(parseFloat(String(s).replace(",", ".")) * 100);
 const limpa = s => String(s || "").trim().replace(/\s+/g, " ");
-const SALA = "id, cor, hex, nome, mascote, preco_centavos, (camisa_imagem IS NOT NULL) AS tem_camisa, pix_chave, contato, atualizado_em";
+const SALA = "id, cor, hex, nome, mascote, preco_centavos, tamanhos, (camisa_imagem IS NOT NULL) AS tem_camisa, pix_chave, contato, atualizado_em";
 const salaOut = s => ({ id: s.id, cor: s.cor, hex: s.hex, nome: s.nome, mascote: s.mascote || "", preco: reais(s.preco_centavos),
   camisa: s.tem_camisa ? `/salas/${s.id}/camisa?v=${new Date(s.atualizado_em).getTime()}` : "",
-  pix: s.pix_chave || "", contato: s.contato || "" });
+  pix: s.pix_chave || "", contato: s.contato || "", tamanhos: s.tamanhos.split(",") });
 
 // --- Senhas dos alunos: guardadas só como hash (scrypt) ---
 const hash = s => { const sal = crypto.randomBytes(16).toString("hex"); return sal + ":" + crypto.scryptSync(s, sal, 32).toString("hex"); };
@@ -114,8 +114,15 @@ app.put("/salas/:id", auth("representante", "adm"), h(async (req, res) => {
   }
   const preco = b.preco ? centavos(b.preco) : s.preco_centavos;
   if (!(preco >= 0)) return res.status(400).json({ erro: "Preço inválido" });
-  await q("UPDATE salas SET nome=$1, preco_centavos=$2, pix_chave=$3, contato=$4, camisa_imagem=$5, atualizado_em=now() WHERE id=$6",
-    [limpa(b.nome) || s.nome, preco, b.pix ?? s.pix_chave, b.contato ?? s.contato, img, id]);
+  let tamanhos = s.tamanhos;
+  if (req.user.papel === "adm" && b.tamanhos != null) {     // só a administração muda os tamanhos
+    const lista = [...new Set(String(b.tamanhos).split(",").map(t => t.trim()).filter(Boolean))];
+    if (!lista.length || lista.length > 12 || lista.some(t => Array.from(t).length > 6 || /\p{C}/u.test(t)))
+      return res.status(400).json({ erro: "Tamanhos inválidos: use até 12, de até 6 caracteres, separados por vírgula" });
+    tamanhos = lista.join(",");
+  }
+  await q("UPDATE salas SET nome=$1, preco_centavos=$2, pix_chave=$3, contato=$4, camisa_imagem=$5, tamanhos=$6, atualizado_em=now() WHERE id=$7",
+    [limpa(b.nome) || s.nome, preco, b.pix ?? s.pix_chave, b.contato ?? s.contato, img, tamanhos, id]);
   res.json(salaOut(await um(`SELECT ${SALA} FROM salas WHERE id=$1`, [id])));
 }));
 
@@ -123,12 +130,26 @@ app.put("/salas/:id", auth("representante", "adm"), h(async (req, res) => {
 app.post("/pedidos", auth(), h(async (req, res) => {
   const { nome_camisa, tamanho, numero_camisa } = req.body, sala_id = Number(req.body.sala_id);
   const s = Number.isInteger(sala_id) && await um("SELECT * FROM salas WHERE id=$1", [sala_id]);
-  const n = numero_camisa === "" || numero_camisa == null ? null : Number(numero_camisa);   // número é opcional
-  if (!s || !limpa(nome_camisa) || !["P", "M", "G", "GG", "XG"].includes(tamanho)) return res.status(400).json({ erro: "Dados inválidos" });
-  if (n !== null && !(Number.isInteger(n) && n >= 0 && n <= 99)) return res.status(400).json({ erro: "O número da camisa deve ser de 0 a 99" });
+  const n = numero_camisa == null ? null : (String(numero_camisa).trim() || null);   // opcional; pode ser número ou símbolo
+  if (!s || !limpa(nome_camisa) || !s.tamanhos.split(",").includes(tamanho)) return res.status(400).json({ erro: "Dados inválidos (confira o tamanho)" });
+  if (n !== null && !(Array.from(n).length <= 20 && /^[^\p{C}]+$/u.test(n))) return res.status(400).json({ erro: "O que vai na camisa pode ter até 20 caracteres" });
   const p = await um("INSERT INTO pedidos (usuario_id,sala_id,nome_camisa,numero_camisa,tamanho,preco_centavos) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
     [req.user.id, sala_id, limpa(nome_camisa), n, tamanho, s.preco_centavos]);   // preço vem do servidor
   res.status(201).json({ id: p.id, preco: reais(s.preco_centavos), pix: s.pix_chave, contato: s.contato });
+}));
+
+// Sacolinha do aluno: só os pedidos dele
+app.get("/pedidos/meus", auth(), h(async (req, res) => {
+  res.json(await q(`SELECT p.id, s.nome AS sala, p.nome_camisa, p.numero_camisa, p.tamanho, p.preco_centavos, p.status, p.criado_em
+    FROM pedidos p JOIN salas s ON s.id=p.sala_id WHERE p.usuario_id=$1 ORDER BY p.id DESC`, [req.user.id]));
+}));
+
+// O aluno cancela o próprio pedido enquanto ele ainda aguarda pagamento
+app.patch("/pedidos/:id/cancelar", auth(), h(async (req, res) => {
+  const id = +req.params.id;
+  const p = Number.isInteger(id) && await um("UPDATE pedidos SET status='cancelado' WHERE id=$1 AND usuario_id=$2 AND status='aguardando_pagamento' RETURNING id", [id, req.user.id]);
+  if (!p) return res.status(409).json({ erro: "Só dá para cancelar pedidos que ainda aguardam pagamento. Fale com o representante." });
+  res.json({ ok: true });
 }));
 
 // Representante vê só a sua sala; ADM vê todas. Ordem alfabética pelo nome do comprador.

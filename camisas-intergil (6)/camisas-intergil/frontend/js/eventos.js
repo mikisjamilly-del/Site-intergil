@@ -35,6 +35,15 @@ function bindAcesso() {
 
 function bindSalas() {
   document.querySelectorAll("[data-sala]").forEach(b => b.onclick = () => { S.sala = +b.dataset.sala; go("sala"); });
+  $("sacola").onclick = () => go("sacola");
+}
+
+function bindSacola() {
+  document.querySelectorAll("[data-cancelar]").forEach(b => b.onclick = async () => {
+    if (!confirm("Cancelar este pedido?")) return;
+    try { await api("/pedidos/" + b.dataset.cancelar + "/cancelar", "PATCH"); S.aviso = "Pedido cancelado."; go("sacola"); }
+    catch (x) { $("err").textContent = "* " + x.message; dizer(x.message); }
+  });
 }
 
 function bindSala() {
@@ -47,9 +56,9 @@ function bindPedido() {
     const nc = $("nc").value.trim(), tam = $("tam").value, n = $("nn").value.trim();
     const er = m => { $("err").textContent = "* " + m; dizer(m); };
     if (!nc || !tam) return er("Preencha o nome da camisa e o tamanho.");
-    if (n !== "" && !/^\d{1,2}$/.test(n)) return er("O número da camisa deve ser de 0 a 99.");
+    if (Array.from(n).length > 20) return er("O que vai na camisa pode ter até 20 caracteres.");
     try {
-      const r = await api("/pedidos", "POST", { sala_id: S.sala + 1, nome_camisa: nc, numero_camisa: n === "" ? null : +n, tamanho: tam });
+      const r = await api("/pedidos", "POST", { sala_id: S.sala + 1, nome_camisa: nc, numero_camisa: n === "" ? null : n, tamanho: tam });
       S.ped = { nomeCamisa: nc, numCamisa: n, tam, preco: r.preco };
       go("pix");
     } catch (x) { er(x.message); }
@@ -92,6 +101,7 @@ function bindPainel() {
     const i = S.papel === "adm" ? S.edit : S.user.turma;
     const corpo = { nome: $("pn").value.trim(), preco: $("pp").value.trim(), pix: $("px").value.trim(), contato: $("pc").value.trim() };
     if (S.masc) corpo.camisa_base64 = S.masc;
+    if (S.papel === "adm") corpo.tamanhos = $("pt").value.trim();
     try { await api("/salas/" + (i + 1), "PUT", corpo); go("painel"); }
     catch (x) { $("err").textContent = "* " + x.message; dizer(x.message); }
   };
@@ -99,6 +109,6 @@ function bindPainel() {
 
 const BINDS = {
   entrada: bindEntrada, acesso: bindAcesso, salas: bindSalas,
-  sala: bindSala, pedido: bindPedido, pix: bindPix, painel: bindPainel,
+  sala: bindSala, pedido: bindPedido, pix: bindPix, painel: bindPainel, sacola: bindSacola,
 };
 const bind = v => BINDS[v]();

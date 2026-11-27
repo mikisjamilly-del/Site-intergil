@@ -2,7 +2,7 @@
 // O servidor também entrega o site, então o endereço da API é o mesmo do site.
 const API = "";
 let TOKEN = null;
-const DB = { salas: [], pedidos: [] };
+const DB = { salas: [], pedidos: [], meus: [] };
 
 async function api(rota, metodo = "GET", corpo) {
   let r;
@@ -22,6 +22,8 @@ async function api(rota, metodo = "GET", corpo) {
 
 const salaDe = i => DB.salas[i];   // i = posição de 0 a 11 (no banco o id é i + 1)
 const carregarSalas = async () => { DB.salas = await api("/salas"); };
+
+const carregarMeus = async () => { DB.meus = await api("/pedidos/meus"); };   // sacolinha do aluno
 
 // Pedidos em ordem alfabética pelo nome do comprador (respeita acentos).
 const carregarPedidos = async () => {
